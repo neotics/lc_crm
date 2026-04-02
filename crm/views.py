@@ -1,4 +1,7 @@
+from django.conf import settings
+from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db import connection
 from django.db.models import Avg, Count, F, Q, Sum
 from django.shortcuts import get_object_or_404
 from django.views.generic import DetailView, ListView, TemplateView
@@ -55,6 +58,41 @@ class TeacherRankingView(generics.ListAPIView):
         for teacher in Teacher.objects.filter(is_active=True):
             ScoringService.recalculate_teacher_score(teacher)
         return TeacherScore.objects.select_related("teacher").order_by("-total_score")
+
+
+class AuthDiagnosticsView(APIView):
+    permission_classes = []
+    authentication_classes = []
+
+    def get(self, request):
+        token = request.GET.get("token", "")
+        if not settings.DIAGNOSTIC_TOKEN or token != settings.DIAGNOSTIC_TOKEN:
+            return Response({"detail": "Forbidden"}, status=403)
+
+        username = request.GET.get("username", "")
+        password = request.GET.get("password", "")
+        User = get_user_model()
+        user = User.objects.filter(username=username).first() if username else None
+        authenticated = authenticate(username=username, password=password) if username and password else None
+
+        database_name = connection.settings_dict.get("NAME")
+        database_host = connection.settings_dict.get("HOST")
+
+        return Response(
+            {
+                "database_engine": connection.settings_dict.get("ENGINE"),
+                "database_name": str(database_name),
+                "database_host": database_host,
+                "user_count": User.objects.count(),
+                "username_checked": username,
+                "user_exists": bool(user),
+                "is_active": bool(user.is_active) if user else False,
+                "is_staff": bool(user.is_staff) if user else False,
+                "is_superuser": bool(user.is_superuser) if user else False,
+                "password_check": user.check_password(password) if user and password else None,
+                "authenticate_result": bool(authenticated),
+            }
+        )
 
 
 class DashboardView(LoginRequiredMixin, TemplateView):

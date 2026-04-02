@@ -1,9 +1,17 @@
 from django.urls import path
 
-from .views import RiskyStudentsView, StudentScoreDetailView, TeacherRankingView, TeacherScoreDetailView, TopStudentsView
+from .views import (
+    AuthDiagnosticsView,
+    RiskyStudentsView,
+    StudentScoreDetailView,
+    TeacherRankingView,
+    TeacherScoreDetailView,
+    TopStudentsView,
+)
 
 
 urlpatterns = [
+    path("diagnostics/auth", AuthDiagnosticsView.as_view(), name="auth-diagnostics"),
     path("students/<int:pk>/score", StudentScoreDetailView.as_view(), name="student-score"),
     path("teachers/<int:pk>/score", TeacherScoreDetailView.as_view(), name="teacher-score"),
     path("analytics/top-students", TopStudentsView.as_view(), name="top-students"),
