@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+{% load crm_i18n %}
+
+{% block title %}{% tr "analytics" %} | LC CRM{% endblock %}
+{% block page_label %}{% tr "advanced_analytics" %}{% endblock %}
+
+{% block content %}
+<section class="page-header reveal">
+  <div>
+    <h2>{% tr "analytics" %}</h2>
+    <p>{% tr "analytics_desc" %}</p>
+  </div>
+  <a class="button" href="/admin/analytics-dashboard/">{% tr "admin_analytics" %}</a>
+</section>
+
+<section class="grid stats">
+  <div class="card stat-card">
+    <div class="label">{% tr "avg_student_score" %}</div>
+    <div class="value" data-count-to="{{ avg_student_score|floatformat:1 }}">0</div>
+  </div>
+  <div class="card stat-card">
+    <div class="label">{% tr "avg_teacher_score" %}</div>
+    <div class="value" data-count-to="{{ avg_teacher_score|floatformat:1 }}">0</div>
+  </div>
+  {% for item in risk_distribution %}
+  <div class="card stat-card">
+    <div class="label">{{ item.risk_level }} risk</div>
+    <div class="value" data-count-to="{{ item.total }}">0</div>
+  </div>
+  {% endfor %}
+</section>
+
+<section class="grid two" style="margin-top: 18px;">
+  <div class="card reveal">
+    <h3 class="section-title">Student ML model</h3>
+    {% if student_ml_model %}
+    <ul class="list-clean">
+      <li class="list-item"><span>Train rows</span><strong>{{ student_ml_model.train_rows }}</strong></li>
+      <li class="list-item"><span>MAE</span><strong>{{ student_ml_model.metrics.mae }}</strong></li>
+      <li class="list-item"><span>RMSE</span><strong>{{ student_ml_model.metrics.rmse }}</strong></li>
+      <li class="list-item"><span>Blended scores</span><strong>{{ ml_blended_students }}</strong></li>
+    </ul>
+    {% else %}
+    <div class="empty-state">Student ML model yo'q.</div>
+    {% endif %}
+  </div>
+  <div class="card reveal">
+    <h3 class="section-title">Teacher ML model</h3>
+    {% if teacher_ml_model %}
+    <ul class="list-clean">
+      <li class="list-item"><span>Train rows</span><strong>{{ teacher_ml_model.train_rows }}</strong></li>
+      <li class="list-item"><span>MAE</span><strong>{{ teacher_ml_model.metrics.mae }}</strong></li>
+      <li class="list-item"><span>RMSE</span><strong>{{ teacher_ml_model.metrics.rmse }}</strong></li>
+      <li class="list-item"><span>Blended scores</span><strong>{{ ml_blended_teachers }}</strong></li>
+    </ul>
+    {% else %}
+    <div class="empty-state">Teacher ML model yo'q.</div>
+    {% endif %}
+  </div>
+</section>
+
+<section class="grid two" style="margin-top: 18px;">
+  <div class="card reveal highlight-panel">
+    <h3 class="section-title">{% tr "risk_distribution" %}</h3>
+    <div class="mini-chart">
+      {% for item in risk_distribution %}
+      <div class="chart-row">
+        <strong>{{ item.risk_level }}</strong>
+        <div class="chart-track">
+          <div class="chart-fill" data-width="{{ item.total|add:item.total }}"></div>
+        </div>
+        <span>{{ item.total }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="card reveal">
+    <div class="controls">
+      <input class="search-input" type="search" placeholder="{% tr 'search_analytics' %}" data-search-input="#analytics-search-area" data-global-focus>
+    </div>
+    <div class="tab-bar" data-tabs=".analytics-panel">
+      <button type="button" class="tab-button active" data-tab-button="analytics-top">{% tr "top_students" %}</button>
+      <button type="button" class="tab-button" data-tab-button="analytics-risk">{% tr "risky_students" %}</button>
+      <button type="button" class="tab-button" data-tab-button="analytics-teacher">{% tr "teacher_ranking" %}</button>
+    </div>
+    <div id="analytics-search-area">
+    <div id="analytics-top" class="analytics-panel">
+      <ul class="list-clean">
+        {% for item in top_students %}
+        <li class="list-item" data-search-row="{{ item.student.full_name }} top {{ item.total_score }}">
+          <div>
+            <strong><a href="{% url 'student-detail' item.student.id %}">{{ item.student.full_name }}</a></strong>
+            <div class="muted">Score {{ item.total_score }}</div>
+          </div>
+        </li>
+        {% empty %}
+        <li class="empty-state">{% tr "no_top_students" %}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    <div id="analytics-risk" class="analytics-panel" hidden>
+      <ul class="list-clean">
+        {% for item in risky_students %}
+        <li class="list-item" data-search-row="{{ item.student.full_name }} risk {{ item.total_score }}">
+          <div>
+            <strong><a href="{% url 'student-detail' item.student.id %}">{{ item.student.full_name }}</a></strong>
+            <div class="muted">Score {{ item.total_score }}</div>
+          </div>
+          <span class="badge high">risk</span>
+        </li>
+        {% empty %}
+        <li class="empty-state">{% tr "no_risky_students" %}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    <div id="analytics-teacher" class="analytics-panel" hidden>
+      <ul class="list-clean">
+        {% for item in teacher_ranking %}
+        <li class="list-item" data-search-row="{{ item.teacher.full_name }} teacher {{ item.total_score }}">
+          <div>
+            <strong><a href="{% url 'teacher-detail' item.teacher.id %}">{{ item.teacher.full_name }}</a></strong>
+            <div class="muted">Score {{ item.total_score }}</div>
+          </div>
+          <span class="badge low">#{{ forloop.counter }}</span>
+        </li>
+        {% empty %}
+        <li class="empty-state">{% tr "no_teacher_ranking" %}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    </div>
+  </div>
+</section>
+
+<section class="grid three" style="margin-top: 18px;">
+  <div class="card reveal">
+    <h3 class="section-title">{% tr "top_students" %}</h3>
+    <ul class="list-clean">
+      {% for item in top_students %}
+      <li class="list-item">
+        <div>
+          <strong><a href="{% url 'student-detail' item.student.id %}">{{ item.student.full_name }}</a></strong>
+          <div class="muted">Score {{ item.total_score }}</div>
+        </div>
+      </li>
+      {% empty %}
+      <li class="empty-state">{% tr "no_top_students" %}</li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <div class="card reveal">
+    <h3 class="section-title">{% tr "risky_students" %}</h3>
+    <ul class="list-clean">
+      {% for item in risky_students %}
+      <li class="list-item">
+        <div>
+          <strong><a href="{% url 'student-detail' item.student.id %}">{{ item.student.full_name }}</a></strong>
+          <div class="muted">Score {{ item.total_score }}</div>
+        </div>
+        <span class="badge high">risk</span>
+      </li>
+      {% empty %}
+      <li class="empty-state">{% tr "no_risky_students" %}</li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <div class="card reveal">
+    <h3 class="section-title">{% tr "teacher_ranking" %}</h3>
+    <ul class="list-clean">
+      {% for item in teacher_ranking %}
+      <li class="list-item">
+        <div>
+          <strong><a href="{% url 'teacher-detail' item.teacher.id %}">{{ item.teacher.full_name }}</a></strong>
+          <div class="muted">Score {{ item.total_score }}</div>
+        </div>
+        <span class="badge low">#{{ forloop.counter }}</span>
+      </li>
+      {% empty %}
+      <li class="empty-state">{% tr "no_teacher_ranking" %}</li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+{% endblock %}

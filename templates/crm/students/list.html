@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% load crm_i18n %}
+
+{% block title %}{% tr "students" %} | LC CRM{% endblock %}
+{% block page_label %}{% tr "student_management" %}{% endblock %}
+
+{% block content %}
+<section class="page-header reveal">
+  <div>
+    <h2>{% tr "students" %}</h2>
+    <p>{% tr "students_desc" %}</p>
+  </div>
+</section>
+
+<div class="card reveal">
+  <div class="controls" data-risk-target="#students-table-body">
+    <input class="search-input" type="search" placeholder="{% tr 'search_student_phone_risk' %}" data-search-input="#students-table-body" data-global-focus>
+    <div class="chip-group">
+      <button type="button" class="chip active" data-risk-value="all">{% tr "all" %}</button>
+      <button type="button" class="chip" data-risk-value="low">{% tr "low" %}</button>
+      <button type="button" class="chip" data-risk-value="medium">{% tr "medium" %}</button>
+      <button type="button" class="chip" data-risk-value="high">{% tr "high" %}</button>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>{% tr "student" %}</th>
+          <th>{% tr "phone" %}</th>
+          <th>{% tr "courses" %}</th>
+          <th>{% tr "score" %}</th>
+          <th>{% tr "risk" %}</th>
+        </tr>
+      </thead>
+      <tbody id="students-table-body">
+        {% for student in students %}
+        <tr data-search-row="{{ student.full_name }} {{ student.phone }} {{ student.score.total_score|default:'0' }} {{ student.score.risk_level|default:'unknown' }}" data-risk-row="{{ student.score.risk_level|default:'unknown' }}">
+          <td><a href="{% url 'student-detail' student.id %}">{{ student.full_name }}</a></td>
+          <td>{{ student.phone|default:"-" }}</td>
+          <td>{{ student.enrollments.count }}</td>
+          <td>{{ student.score.total_score|default:"0" }}</td>
+          <td>
+            {% if student.score %}
+            <span class="badge {{ student.score.risk_level }}">{% tr_value student.score.risk_level %}</span>
+            {% else %}
+            <span class="muted">{% tr "score_not_calculated" %}</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5">{% tr "no_students" %}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

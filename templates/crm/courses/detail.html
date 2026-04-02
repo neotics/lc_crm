@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}{{ course.name }} | Courses{% endblock %}
+
+{% block content %}
+<section class="page-header">
+  <div>
+    <h2>{{ course.name }}</h2>
+    <p>{{ course.teacher.full_name }} · {{ course.start_date }} dan boshlangan</p>
+  </div>
+  <a class="button secondary" href="{% url 'course-list' %}">Orqaga</a>
+</section>
+
+<section class="grid two">
+  <div class="card">
+    <h3 class="section-title">Course summary</h3>
+    <div class="list-item">
+      <span>Teacher total score</span>
+      <strong>{{ teacher_score.total_score }}</strong>
+    </div>
+    <div class="list-item" style="margin-top: 12px;">
+      <span>Enrollments</span>
+      <strong>{{ enrollments.count }}</strong>
+    </div>
+    <div class="list-item" style="margin-top: 12px;">
+      <span>Lessons</span>
+      <strong>{{ lessons.count }}</strong>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 class="section-title">Recent lessons</h3>
+    <ul class="list-clean">
+      {% for lesson in lessons %}
+      <li class="list-item">
+        <div>
+          <strong>{{ lesson.date }}</strong>
+          <div class="muted">{{ lesson.topic|default:"Topic kiritilmagan" }}</div>
+        </div>
+      </li>
+      {% empty %}
+      <li class="empty-state">Lesson yo'q.</li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+
+<section class="card" style="margin-top: 18px;">
+  <h3 class="section-title">Enrolled students</h3>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Student</th>
+          <th>Status</th>
+          <th>Score</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for enrollment in enrollments %}
+        <tr>
+          <td><a href="{% url 'student-detail' enrollment.student.id %}">{{ enrollment.student.full_name }}</a></td>
+          <td>{{ enrollment.status }}</td>
+          <td>{{ enrollment.student.score.total_score|default:"0" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="3">Enrollment yo'q.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

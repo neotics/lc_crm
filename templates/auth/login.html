@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% load crm_i18n %}
+
+{% block title %}{% tr "login_title" %} | LC CRM{% endblock %}
+
+{% block auth_content %}
+<div class="login-shell">
+  <div class="card login-card">
+    <div class="topbar-actions" style="justify-content: space-between; margin-bottom: 18px;">
+      <div class="switcher-group">
+        <span class="switcher-label">{% tr "language" %}</span>
+        <a class="chip {% if current_language == 'uz' %}active{% endif %}" href="?lang=uz">UZ</a>
+        <a class="chip {% if current_language == 'ru' %}active{% endif %}" href="?lang=ru">RU</a>
+        <a class="chip {% if current_language == 'en' %}active{% endif %}" href="?lang=en">EN</a>
+      </div>
+      <button type="button" class="button secondary icon-button" data-command="toggle-theme" data-label-light="{% tr 'light_mode' %}" data-label-dark="{% tr 'dark_mode' %}">
+        {% if current_theme == 'dark' %}{% tr "dark_mode" %}{% else %}{% tr "light_mode" %}{% endif %}
+      </button>
+    </div>
+    <small style="color: var(--accent); text-transform: uppercase; letter-spacing: 0.14em; font-weight: 700;">Educational CRM</small>
+    <h2 style="margin-bottom: 8px;">{% tr "login_title" %}</h2>
+    <p class="muted">{% tr "login_description" %}</p>
+    <form method="post">
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+      <label for="id_username">{% tr "username" %}</label>
+      {{ form.username }}
+      <label for="id_password">{% tr "password" %}</label>
+      {{ form.password }}
+      <input type="submit" value="{% tr 'sign_in' %}">
+    </form>
+  </div>
+</div>
+{% endblock %}

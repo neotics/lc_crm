@@ -1,0 +1,54 @@
+{
+  "model_type": "ridge_linear_regression",
+  "trained_at": "2026-04-01T23:41:13.387099+00:00",
+  "train_rows": 100,
+  "feature_keys": [
+    "attendance_score",
+    "grade_score",
+    "payment_score",
+    "activity_score",
+    "attendance_ratio",
+    "average_grade_raw",
+    "debt_months",
+    "active_enrollments",
+    "days_since_activity"
+  ],
+  "means": {
+    "attendance_score": 68.5697,
+    "grade_score": 66.3989,
+    "payment_score": 72.4,
+    "activity_score": 84.5,
+    "attendance_ratio": 68.503,
+    "average_grade_raw": 66.3989,
+    "debt_months": 0.69,
+    "active_enrollments": 1.36,
+    "days_since_activity": 0.0
+  },
+  "stds": {
+    "attendance_score": 32.663532554057895,
+    "grade_score": 29.320978697683337,
+    "payment_score": 30.825963083089555,
+    "activity_score": 31.276988346066826,
+    "attendance_ratio": 32.820085268018424,
+    "average_grade_raw": 29.320978697683337,
+    "debt_months": 0.7706490770772388,
+    "active_enrollments": 0.9748846085563152,
+    "days_since_activity": 1.0
+  },
+  "coefficients": [
+    67.5212,
+    0.18345728665601446,
+    10.002364903331511,
+    1.415590318957698,
+    -3.8795963917801357,
+    8.925709280914758,
+    10.00236490333166,
+    -1.4155903189535963,
+    1.1062290841004139,
+    0.0
+  ],
+  "metrics": {
+    "mae": 3.2704,
+    "rmse": 4.0973
+  }
+}

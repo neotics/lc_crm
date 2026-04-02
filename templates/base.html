@@ -1,0 +1,78 @@
+{% load static crm_i18n %}
+<!DOCTYPE html>
+<html lang="{{ current_language }}" data-theme="{{ current_theme }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}LC CRM{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/site.css' %}">
+</head>
+<body>
+  {% if user.is_authenticated %}
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <small>{% tr "brand_subtitle" %}</small>
+        <h1>LC CRM</h1>
+      </div>
+      <div class="muted">{% tr "brand_description" %}</div>
+      <nav class="nav-group">
+        <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">
+          <span>{% tr "dashboard" %}</span><span>01</span>
+        </a>
+        <a class="nav-link {% if 'student' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'student-list' %}">
+          <span>{% tr "students" %}</span><span>02</span>
+        </a>
+        <a class="nav-link {% if 'teacher' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'teacher-list' %}">
+          <span>{% tr "teachers" %}</span><span>03</span>
+        </a>
+        <a class="nav-link {% if 'course' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'course-list' %}">
+          <span>{% tr "courses" %}</span><span>04</span>
+        </a>
+        <a class="nav-link {% if 'analytics' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'analytics-overview' %}">
+          <span>{% tr "analytics" %}</span><span>05</span>
+        </a>
+        <a class="nav-link" href="/admin/">
+          <span>{% tr "admin" %}</span><span>06</span>
+        </a>
+      </nav>
+      <div style="margin-top: 28px;">
+        <div class="card">
+          <div class="muted">{% tr "logged_in_user" %}</div>
+          <h3 style="margin-bottom: 6px;">{{ user.username }}</h3>
+          <form method="post" action="{% url 'logout' %}">
+            {% csrf_token %}
+            <button type="submit" class="button secondary" style="width: 100%;">{% tr "logout" %}</button>
+          </form>
+        </div>
+      </div>
+    </aside>
+    <main class="main">
+      <div class="topbar card reveal">
+        <div>
+          <div class="eyebrow">{% tr "interactive_crm" %}</div>
+          <strong>{% block page_label %}{% tr "smart_monitoring_panel" %}{% endblock %}</strong>
+        </div>
+        <div class="topbar-actions">
+          <div class="switcher-group">
+            <span class="switcher-label">{% tr "language" %}</span>
+            <a class="chip {% if current_language == 'uz' %}active{% endif %}" href="?lang=uz">UZ</a>
+            <a class="chip {% if current_language == 'ru' %}active{% endif %}" href="?lang=ru">RU</a>
+            <a class="chip {% if current_language == 'en' %}active{% endif %}" href="?lang=en">EN</a>
+          </div>
+          <button type="button" class="button secondary icon-button" data-command="toggle-theme" data-label-light="{% tr 'light_mode' %}" data-label-dark="{% tr 'dark_mode' %}">
+            {% if current_theme == 'dark' %}{% tr "dark_mode" %}{% else %}{% tr "light_mode" %}{% endif %}
+          </button>
+          <button type="button" class="button secondary icon-button" data-command="toggle-sidebar">{% tr "menu" %}</button>
+          <button type="button" class="button secondary icon-button" data-command="spotlight">{% tr "quick_focus" %}</button>
+        </div>
+      </div>
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+  {% else %}
+    {% block auth_content %}{% endblock %}
+{% endif %}
+  <script src="{% static 'js/site.js' %}"></script>
+</body>
+</html>

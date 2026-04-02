@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}Courses | LC CRM{% endblock %}
+
+{% block content %}
+<section class="page-header">
+  <div>
+    <h2>Courses</h2>
+    <p>Course bo'yicha teacher, active enrollment va davomiylikni boshqarish sahifasi.</p>
+  </div>
+</section>
+
+<div class="grid three">
+  {% for course in courses %}
+  <a href="{% url 'course-detail' course.id %}" class="card">
+    <div class="muted">{{ course.teacher.full_name }}</div>
+    <h3>{{ course.name }}</h3>
+    <p class="muted">{{ course.start_date }} dan boshlangan</p>
+    <div class="list-item" style="margin-top: 14px;">
+      <span>Active students</span>
+      <strong>{{ course.active_students }}</strong>
+    </div>
+  </a>
+  {% empty %}
+  <div class="empty-state">Course topilmadi.</div>
+  {% endfor %}
+</div>
+{% endblock %}

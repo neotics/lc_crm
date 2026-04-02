@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+{% load crm_i18n %}
+
+{% block title %}{% tr "dashboard" %} | LC CRM{% endblock %}
+{% block page_label %}{% tr "dashboard_overview" %}{% endblock %}
+
+{% block content %}
+<section class="page-header reveal">
+  <div>
+    <h2>{% tr "performance_dashboard" %}</h2>
+    <p>{% tr "dashboard_desc" %}</p>
+  </div>
+  <a class="button" href="{% url 'analytics-overview' %}">{% tr "analytics_page" %}</a>
+</section>
+
+<section class="grid stats">
+  <div class="card stat-card">
+    <div class="label">{% tr "active_students" %}</div>
+    <div class="value" data-count-to="{{ stats.students }}">0</div>
+  </div>
+  <div class="card stat-card">
+    <div class="label">{% tr "active_teachers" %}</div>
+    <div class="value" data-count-to="{{ stats.teachers }}">0</div>
+  </div>
+  <div class="card stat-card">
+    <div class="label">{% tr "active_courses" %}</div>
+    <div class="value" data-count-to="{{ stats.courses }}">0</div>
+  </div>
+  <div class="card stat-card">
+    <div class="label">{% tr "debt_total" %}</div>
+    <div class="value" data-count-to="{{ stats.outstanding_payments }}">0</div>
+  </div>
+</section>
+
+<section class="split" style="margin-top: 18px;">
+  <div class="card hero reveal">
+    <h3>{% tr "scoring_engine_active" %}</h3>
+    <p>{% tr "scoring_engine_desc" %}</p>
+    <div class="grid three" style="margin-top: 24px;">
+      <div>
+        <div class="muted" style="color: rgba(255,255,255,0.75);">{% tr "top_students" %}</div>
+        <h2 style="margin: 8px 0 0;" data-count-to="{{ top_students|length }}">0</h2>
+      </div>
+      <div>
+        <div class="muted" style="color: rgba(255,255,255,0.75);">{% tr "high_risk" %}</div>
+        <h2 style="margin: 8px 0 0;" data-count-to="{{ risky_students|length }}">0</h2>
+      </div>
+      <div>
+        <div class="muted" style="color: rgba(255,255,255,0.75);">{% tr "active_enrollments" %}</div>
+        <h2 style="margin: 8px 0 0;" data-count-to="{{ stats.active_enrollments }}">0</h2>
+      </div>
+    </div>
+  </div>
+
+  <div class="card reveal">
+    <h3 class="section-title">{% tr "teacher_ranking" %}</h3>
+    <ul class="list-clean">
+      {% for item in teacher_ranking %}
+      <li class="list-item">
+        <div>
+          <strong><a href="{% url 'teacher-detail' item.teacher.id %}">{{ item.teacher.full_name }}</a></strong>
+          <div class="muted">{% tr "total_score" %} {{ item.total_score }}</div>
+        </div>
+        <span class="badge low">#{{ forloop.counter }}</span>
+      </li>
+      {% empty %}
+      <li class="empty-state">{% tr "no_teacher_ranking" %}</li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+
+<section class="spot-grid" style="margin-top: 18px;">
+  <div class="card reveal highlight-panel">
+    <div class="controls">
+      <input class="search-input" type="search" placeholder="{% tr 'search_student' %}" data-search-input="#dashboard-student-table" data-global-focus>
+    </div>
+    <div class="tab-bar" data-tabs=".dashboard-panel">
+      <button type="button" class="tab-button active" data-tab-button="dashboard-top">{% tr "top_students" %}</button>
+      <button type="button" class="tab-button" data-tab-button="dashboard-risk">{% tr "risk_map" %}</button>
+    </div>
+    <div id="dashboard-top" class="dashboard-panel">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>{% tr "student" %}</th>
+              <th>{% tr "score" %}</th>
+              <th>{% tr "risk" %}</th>
+            </tr>
+          </thead>
+          <tbody id="dashboard-student-table">
+            {% for item in top_students %}
+            <tr data-search-row="{{ item.student.full_name }} {{ item.total_score }} {{ item.risk_level }}">
+              <td><a href="{% url 'student-detail' item.student.id %}">{{ item.student.full_name }}</a></td>
+              <td>{{ item.total_score }}</td>
+              <td><span class="badge {{ item.risk_level }}">{% tr_value item.risk_level %}</span></td>
+          </tr>
+          {% empty %}
+            <tr><td colspan="3">{% tr "no_data" %}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      </div>
+    </div>
+    <div id="dashboard-risk" class="dashboard-panel" hidden>
+      <div class="mini-chart">
+        {% for item in risky_students %}
+        <div class="chart-row">
+          <strong>{{ item.student.full_name|truncatechars:10 }}</strong>
+          <div class="chart-track">
+            <div class="chart-fill" data-width="{{ item.total_score }}"></div>
+          </div>
+          <span>{{ item.total_score }}</span>
+        </div>
+        {% empty %}
+        <div class="empty-state">{% tr "no_data" %}</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="card reveal">
+    <h3 class="section-title">{% tr "risky_students" %}</h3>
+    <div class="controls" data-risk-target="#risky-students-table">
+      <button type="button" class="chip active" data-risk-value="all">{% tr "all" %}</button>
+      <button type="button" class="chip" data-risk-value="high">{% tr "high" %}</button>
+      <button type="button" class="chip" data-risk-value="medium">{% tr "medium" %}</button>
+      <button type="button" class="chip" data-risk-value="low">{% tr "low" %}</button>
+    </div>
+    <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>{% tr "student" %}</th>
+              <th>{% tr "score" %}</th>
+              <th>{% tr "status" %}</th>
+            </tr>
+          </thead>
+        <tbody id="risky-students-table">
+          {% for item in risky_students %}
+          <tr data-risk-row="{{ item.risk_level }}" data-search-row="{{ item.student.full_name }} {{ item.total_score }} {{ item.risk_level }}">
+            <td><a href="{% url 'student-detail' item.student.id %}">{{ item.student.full_name }}</a></td>
+            <td>{{ item.total_score }}</td>
+            <td><span class="badge {{ item.risk_level }}">{% tr_value item.risk_level %}</span></td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="3">{% tr "no_high_risk_students" %}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section class="grid two" style="margin-top: 18px;">
+  <div class="card reveal">
+    <h3 class="section-title">{% tr "top_students" %}</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>{% tr "student" %}</th>
+            <th>{% tr "score" %}</th>
+            <th>{% tr "risk" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in top_students %}
+          <tr>
+            <td><a href="{% url 'student-detail' item.student.id %}">{{ item.student.full_name }}</a></td>
+            <td>{{ item.total_score }}</td>
+            <td><span class="badge {{ item.risk_level }}">{% tr_value item.risk_level %}</span></td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="3">{% tr "no_data" %}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card reveal">
+    <h3 class="section-title">{% tr "realtime_focus" %}</h3>
+    <ul class="list-clean">
+      <li class="list-item">
+        <div>
+          <strong>{% tr "teacher_ranking_updated" %}</strong>
+          <div class="muted">{% tr "teacher_ranking_updated_desc" %}</div>
+        </div>
+      </li>
+      <li class="list-item">
+        <div>
+          <strong>{% tr "risks_visible" %}</strong>
+          <div class="muted">{% tr "risks_visible_desc" %}</div>
+        </div>
+      </li>
+      <li class="list-item">
+        <div>
+          <strong>{% tr "activity_decay" %}</strong>
+          <div class="muted">{% tr "activity_decay_desc" %}</div>
+        </div>
+      </li>
+    </ul>
+  </div>
+</section>
+{% endblock %}

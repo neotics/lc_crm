@@ -1,0 +1,46 @@
+{
+  "model_type": "ridge_linear_regression",
+  "trained_at": "2026-04-01T23:41:13.412421+00:00",
+  "train_rows": 8,
+  "feature_keys": [
+    "student_avg_score",
+    "attendance_control_score",
+    "student_retention_score",
+    "feedback_score",
+    "student_count",
+    "active_course_count",
+    "high_risk_student_ratio"
+  ],
+  "means": {
+    "student_avg_score": 77.8625,
+    "attendance_control_score": 100.0,
+    "student_retention_score": 93.5725,
+    "feedback_score": 83.75,
+    "student_count": 22.0,
+    "active_course_count": 1.5,
+    "high_risk_student_ratio": 10.725
+  },
+  "stds": {
+    "student_avg_score": 4.993064564974101,
+    "attendance_control_score": 1.0,
+    "student_retention_score": 6.364280693841214,
+    "feedback_score": 8.37779804005802,
+    "student_count": 8.154753215150045,
+    "active_course_count": 0.5,
+    "high_risk_student_ratio": 7.011251671420731
+  },
+  "coefficients": [
+    68.35375,
+    -7.625826243638286,
+    0.0,
+    -8.487526139953847,
+    -3.132584312921566,
+    16.20334638325726,
+    -0.40537812891285374,
+    -14.595872725651653
+  ],
+  "metrics": {
+    "mae": 2.2839,
+    "rmse": 2.7462
+  }
+}

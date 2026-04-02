@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}{{ teacher.full_name }} | Teachers{% endblock %}
+
+{% block content %}
+<section class="page-header">
+  <div>
+    <h2>{{ teacher.full_name }}</h2>
+    <p>{{ teacher.phone|default:"Telefon kiritilmagan" }}</p>
+  </div>
+  <a class="button secondary" href="{% url 'teacher-list' %}">Orqaga</a>
+</section>
+
+<section class="grid two">
+  <div class="card">
+    <h3 class="section-title">Teacher score</h3>
+    <div class="metric">
+      <div class="metric-head"><span>Student avg score</span><strong>{{ score.student_avg_score }}</strong></div>
+      <div class="progress"><span style="width: {{ score.student_avg_score }}%;"></span></div>
+    </div>
+    <div class="metric">
+      <div class="metric-head"><span>Attendance control</span><strong>{{ score.attendance_control_score }}</strong></div>
+      <div class="progress"><span style="width: {{ score.attendance_control_score }}%;"></span></div>
+    </div>
+    <div class="metric">
+      <div class="metric-head"><span>Retention</span><strong>{{ score.student_retention_score }}</strong></div>
+      <div class="progress"><span style="width: {{ score.student_retention_score }}%;"></span></div>
+    </div>
+    <div class="metric">
+      <div class="metric-head"><span>Feedback</span><strong>{{ score.feedback_score }}</strong></div>
+      <div class="progress"><span style="width: {{ score.feedback_score }}%;"></span></div>
+    </div>
+    <div class="list-item" style="margin-top: 18px;">
+      <div>
+        <div class="muted">Total score</div>
+        <h3 style="margin: 6px 0 0;">{{ score.total_score }}</h3>
+        <div class="muted">Rule {{ score.rule_based_score }} · ML {{ score.ml_predicted_score }} · {{ score.score_source }}</div>
+      </div>
+      <span class="badge low">Teacher</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 class="section-title">Courses</h3>
+    <ul class="list-clean">
+      {% for course in courses %}
+      <li class="list-item">
+        <div>
+          <strong><a href="{% url 'course-detail' course.id %}">{{ course.name }}</a></strong>
+          <div class="muted">{{ course.enrollments.count }} students · {{ course.lessons.count }} lessons</div>
+        </div>
+        <span class="badge {% if course.is_active %}low{% else %}high{% endif %}">
+          {% if course.is_active %}active{% else %}inactive{% endif %}
+        </span>
+      </li>
+      {% empty %}
+      <li class="empty-state">Course topilmadi.</li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+
+<section class="card" style="margin-top: 18px;">
+  <h3 class="section-title">Teacher students</h3>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Student</th>
+          <th>Score</th>
+          <th>Risk</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for student in students %}
+        <tr>
+          <td><a href="{% url 'student-detail' student.id %}">{{ student.full_name }}</a></td>
+          <td>{{ student.score.total_score|default:"0" }}</td>
+          <td>
+            {% if student.score %}
+            <span class="badge {{ student.score.risk_level }}">{{ student.score.risk_level }}</span>
+            {% else %}
+            <span class="muted">-</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="3">Studentlar topilmadi.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}
