@@ -33,31 +33,24 @@ class TopStudentsView(generics.ListAPIView):
     serializer_class = StudentScoreSerializer
 
     def get_queryset(self):
-        student_ids = Student.objects.filter(is_active=True).values_list("id", flat=True)
-        for student in Student.objects.filter(id__in=student_ids):
-            ScoringService.recalculate_student_score(student)
-        return StudentScore.objects.select_related("student").order_by("-total_score")[:10]
+        return StudentScore.objects.select_related("student").filter(student__is_active=True).order_by("-total_score")[:10]
 
 
 class RiskyStudentsView(generics.ListAPIView):
     serializer_class = StudentScoreSerializer
 
     def get_queryset(self):
-        students = Student.objects.filter(is_active=True)
-        for student in students:
-            ScoringService.recalculate_student_score(student)
-        return StudentScore.objects.select_related("student").filter(risk_level=StudentScore.RiskLevel.HIGH).order_by(
-            "total_score"
-        )
+        return StudentScore.objects.select_related("student").filter(
+            student__is_active=True,
+            risk_level=StudentScore.RiskLevel.HIGH,
+        ).order_by("total_score")
 
 
 class TeacherRankingView(generics.ListAPIView):
     serializer_class = TeacherScoreSerializer
 
     def get_queryset(self):
-        for teacher in Teacher.objects.filter(is_active=True):
-            ScoringService.recalculate_teacher_score(teacher)
-        return TeacherScore.objects.select_related("teacher").order_by("-total_score")
+        return TeacherScore.objects.select_related("teacher").filter(teacher__is_active=True).order_by("-total_score")
 
 
 class AuthDiagnosticsView(APIView):
@@ -105,11 +98,6 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         active_teachers = Teacher.objects.filter(is_active=True)
         active_courses = Course.objects.filter(is_active=True)
 
-        for student in active_students:
-            ScoringService.recalculate_student_score(student)
-        for teacher in active_teachers:
-            ScoringService.recalculate_teacher_score(teacher)
-
         top_students = StudentScore.objects.select_related("student").order_by("-total_score")[:10]
         risky_students = StudentScore.objects.select_related("student").filter(
             risk_level=StudentScore.RiskLevel.HIGH
@@ -144,10 +132,7 @@ class StudentListView(LoginRequiredMixin, ListView):
     paginate_by = 20
 
     def get_queryset(self):
-        queryset = Student.objects.filter(is_active=True).prefetch_related("enrollments__course")
-        for student in queryset:
-            ScoringService.recalculate_student_score(student)
-        return queryset
+        return Student.objects.filter(is_active=True).select_related("score").prefetch_related("enrollments__course")
 
 
 class StudentDetailView(LoginRequiredMixin, DetailView):
@@ -183,10 +168,7 @@ class TeacherListView(LoginRequiredMixin, ListView):
     paginate_by = 20
 
     def get_queryset(self):
-        queryset = Teacher.objects.filter(is_active=True).prefetch_related("courses")
-        for teacher in queryset:
-            ScoringService.recalculate_teacher_score(teacher)
-        return queryset
+        return Teacher.objects.filter(is_active=True).select_related("score").prefetch_related("courses")
 
 
 class TeacherDetailView(LoginRequiredMixin, DetailView):
@@ -253,10 +235,6 @@ class AnalyticsOverviewView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         students = Student.objects.filter(is_active=True)
         teachers = Teacher.objects.filter(is_active=True)
-        for student in students:
-            ScoringService.recalculate_student_score(student)
-        for teacher in teachers:
-            ScoringService.recalculate_teacher_score(teacher)
 
         context.update(
             {
