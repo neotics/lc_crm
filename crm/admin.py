@@ -17,7 +17,6 @@ from .models import (
     Teacher,
     TeacherScore,
 )
-from .services import ScoringService
 
 
 def analytics_dashboard_view(request):
@@ -29,11 +28,6 @@ def analytics_dashboard_view(request):
             f"Student rows={results['student']['artifact']['train_rows']}, "
             f"Teacher rows={results['teacher']['artifact']['train_rows']}.",
         )
-
-    for student in Student.objects.filter(is_active=True):
-        ScoringService.recalculate_student_score(student)
-    for teacher in Teacher.objects.filter(is_active=True):
-        ScoringService.recalculate_teacher_score(teacher)
 
     context = dict(
         admin.site.each_context(request),
