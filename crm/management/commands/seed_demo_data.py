@@ -3,7 +3,7 @@ from datetime import timedelta
 from decimal import Decimal
 
 from django.core.management.base import BaseCommand
-from django.db import transaction
+from django.db import close_old_connections
 from django.utils import timezone
 
 from crm.models import (
@@ -147,29 +147,48 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         random.seed(options["seed"])
 
-        with transaction.atomic():
-            if options["reset"]:
-                self._reset_data()
+        if options["reset"]:
+            self.stdout.write("Resetting existing demo data...")
+            self._reset_data()
+            close_old_connections()
 
-            config, _ = ScoringConfig.objects.get_or_create(
-                id=1,
-                defaults={
-                    "attendance_weight": 0.3,
-                    "grade_weight": 0.3,
-                    "payment_weight": 0.2,
-                    "activity_weight": 0.2,
-                },
-            )
+        self.stdout.write("Ensuring scoring configuration...")
+        ScoringConfig.objects.get_or_create(
+            id=1,
+            defaults={
+                "attendance_weight": 0.3,
+                "grade_weight": 0.3,
+                "payment_weight": 0.2,
+                "activity_weight": 0.2,
+            },
+        )
 
-            teachers = self._create_teachers(options["teachers"])
-            students = self._create_students(options["students"])
-            courses = self._create_courses(options["courses"], teachers)
-            enrollments = self._create_enrollments(students, courses)
-            lessons = self._create_lessons(courses)
-            attendance_count, grade_count = self._create_attendance_and_grades(enrollments, lessons)
-            payment_count = self._create_payments(students)
-            self._recalculate_scores(students, teachers)
-            self._apply_supervised_labels(students, teachers)
+        self.stdout.write(f"Creating {options['teachers']} teachers...")
+        teachers = self._create_teachers(options["teachers"])
+        close_old_connections()
+        self.stdout.write(f"Creating {options['students']} students...")
+        students = self._create_students(options["students"])
+        close_old_connections()
+        self.stdout.write(f"Creating {options['courses']} courses...")
+        courses = self._create_courses(options["courses"], teachers)
+        close_old_connections()
+        self.stdout.write("Creating enrollments...")
+        enrollments = self._create_enrollments(students, courses)
+        close_old_connections()
+        self.stdout.write("Creating lessons...")
+        lessons = self._create_lessons(courses)
+        close_old_connections()
+        self.stdout.write("Creating attendance and grades...")
+        attendance_count, grade_count = self._create_attendance_and_grades(enrollments, lessons)
+        close_old_connections()
+        self.stdout.write("Creating payments...")
+        payment_count = self._create_payments(students)
+        close_old_connections()
+        self.stdout.write("Recalculating student and teacher scores...")
+        self._recalculate_scores(students, teachers)
+        close_old_connections()
+        self.stdout.write("Generating supervised observed labels...")
+        self._apply_supervised_labels(students, teachers)
 
         self.stdout.write(
             self.style.SUCCESS(
@@ -412,10 +431,15 @@ class Command(BaseCommand):
         return len(payments)
 
     def _recalculate_scores(self, students, teachers):
-        for student in students:
+        for index, student in enumerate(students, start=1):
             ScoringService.recalculate_student_score(student)
-        for teacher in teachers:
-            ScoringService.recalculate_teacher_score(teacher)
+            if index % 20 == 0:
+                self.stdout.write(f"  Student scores recalculated: {index}/{len(students)}")
+                close_old_connections()
+        for index, teacher in enumerate(teachers, start=1):
+            ScoringService.recalculate_teacher_score(teacher, refresh_students=False)
+            self.stdout.write(f"  Teacher scores recalculated: {index}/{len(teachers)}")
+            close_old_connections()
 
     def _apply_supervised_labels(self, students, teachers):
         student_profiles = self._build_profile_map_for_students(students)

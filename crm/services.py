@@ -325,10 +325,11 @@ class ScoringService:
         return cls.clamp(total_score)
 
     @classmethod
-    def recalculate_teacher_score(cls, teacher: Teacher) -> TeacherScore:
+    def recalculate_teacher_score(cls, teacher: Teacher, refresh_students: bool = True) -> TeacherScore:
         config = cls.get_config()
         students = list(cls.teacher_students_queryset(teacher))
-        cls.recalculate_students(students)
+        if refresh_students:
+            cls.recalculate_students(students)
 
         score_obj, _ = TeacherScore.objects.get_or_create(teacher=teacher)
         feature_payload = cls.build_teacher_feature_payload(teacher, feedback_score=score_obj.feedback_score)
