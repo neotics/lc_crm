@@ -28,7 +28,7 @@
   </div>
   <div class="card stat-card">
     <div class="label">{% tr "debt_total" %}</div>
-    <div class="value" data-count-to="{{ stats.outstanding_payments }}">0</div>
+    <div class="value" data-count-to="{{ stats.outstanding_payments|floatformat:'2u' }}">{{ stats.outstanding_payments|floatformat:2 }}</div>
   </div>
 </section>
 

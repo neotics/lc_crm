@@ -10,14 +10,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function animateCounters() {
   document.querySelectorAll("[data-count-to]").forEach((element) => {
-    const target = Number(element.dataset.countTo || 0);
+    const target = parseCountValue(element.dataset.countTo);
+    if (!Number.isFinite(target)) {
+      element.textContent = "0";
+      return;
+    }
     const duration = 900;
     const start = performance.now();
+    const decimals = Number.isInteger(target) ? 0 : getDecimalPlaces(element.dataset.countTo);
 
     function tick(now) {
       const progress = Math.min((now - start) / duration, 1);
       const eased = 1 - Math.pow(1 - progress, 3);
-      const value = target % 1 === 0 ? Math.round(target * eased) : (target * eased).toFixed(1);
+      const currentValue = target * eased;
+      const value = decimals === 0 ? Math.round(currentValue) : currentValue.toFixed(decimals);
       element.textContent = value;
       if (progress < 1) {
         requestAnimationFrame(tick);
@@ -26,6 +32,23 @@ function animateCounters() {
 
     requestAnimationFrame(tick);
   });
+}
+
+function parseCountValue(rawValue) {
+  if (typeof rawValue !== "string") return 0;
+  const normalized = rawValue
+    .trim()
+    .replace(/\s+/g, "")
+    .replace(/,(?=\d{3}(?:\D|$))/g, "")
+    .replace(/,/g, ".");
+  return Number(normalized || 0);
+}
+
+function getDecimalPlaces(rawValue) {
+  if (typeof rawValue !== "string") return 0;
+  const normalized = rawValue.trim().replace(/\s+/g, "").replace(/,(?=\d{3}(?:\D|$))/g, "");
+  const separator = Math.max(normalized.lastIndexOf("."), normalized.lastIndexOf(","));
+  return separator === -1 ? 0 : normalized.length - separator - 1;
 }
 
 function animateProgressBars() {

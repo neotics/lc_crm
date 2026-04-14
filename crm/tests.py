@@ -8,6 +8,7 @@ from django.utils import timezone
 from .ml import STUDENT_FEATURE_KEYS, TEACHER_FEATURE_KEYS, fit_linear_regression, get_model_path, save_model_artifact
 from .models import Attendance, Course, Enrollment, Grade, Lesson, Payment, Student, Teacher, TeacherScore
 from .services import ScoringService
+from .views import DashboardView
 
 
 class ScoringServiceTests(TestCase):
@@ -115,3 +116,35 @@ class ScoringServiceTests(TestCase):
             else:
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text(original_content)
+
+
+class DashboardViewTests(TestCase):
+    def test_calculate_outstanding_payments_sums_all_debts(self):
+        student = Student.objects.create(full_name="Zarina")
+        current_month = timezone.localdate().replace(day=1)
+
+        Payment.objects.create(
+            student=student,
+            month=current_month,
+            amount_due=Decimal("500000.00"),
+            amount_paid=Decimal("350000.00"),
+            status=Payment.Status.PARTIAL,
+        )
+        Payment.objects.create(
+            student=student,
+            month=(current_month - timedelta(days=31)).replace(day=1),
+            amount_due=Decimal("400000.00"),
+            amount_paid=Decimal("0.00"),
+            status=Payment.Status.UNPAID,
+        )
+        Payment.objects.create(
+            student=student,
+            month=(current_month - timedelta(days=62)).replace(day=1),
+            amount_due=Decimal("450000.00"),
+            amount_paid=Decimal("450000.00"),
+            status=Payment.Status.PAID,
+        )
+
+        outstanding_payments = DashboardView.calculate_outstanding_payments()
+
+        self.assertEqual(outstanding_payments, Decimal("550000"))

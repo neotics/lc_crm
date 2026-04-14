@@ -2,7 +2,8 @@ from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import connection
-from django.db.models import Avg, Count, F, Q, Sum
+from django.db.models import Avg, Count, DecimalField, ExpressionWrapper, F, Q, Sum, Value
+from django.db.models.functions import Coalesce
 from django.shortcuts import get_object_or_404
 from django.views.generic import DetailView, ListView, TemplateView
 from rest_framework import generics
@@ -91,6 +92,24 @@ class AuthDiagnosticsView(APIView):
 class DashboardView(LoginRequiredMixin, TemplateView):
     template_name = "crm/dashboard.html"
 
+    @staticmethod
+    def calculate_outstanding_payments():
+        debt_expression = ExpressionWrapper(
+            F("amount_due") - F("amount_paid"),
+            output_field=DecimalField(max_digits=10, decimal_places=2),
+        )
+        return (
+            Payment.objects.filter(amount_paid__lt=F("amount_due"))
+            .aggregate(
+                total=Coalesce(
+                    Sum(debt_expression),
+                    Value(0),
+                    output_field=DecimalField(max_digits=12, decimal_places=2),
+                )
+            )
+            .get("total")
+        )
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
@@ -104,9 +123,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         )[:10]
         teacher_ranking = TeacherScore.objects.select_related("teacher").order_by("-total_score")[:10]
 
-        outstanding_payments = Payment.objects.filter(amount_paid__lt=F("amount_due")).aggregate(
-            total=Sum(F("amount_due") - F("amount_paid"))
-        )["total"] or 0
+        outstanding_payments = self.calculate_outstanding_payments()
 
         context.update(
             {
