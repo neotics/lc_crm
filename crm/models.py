@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils import timezone
@@ -14,6 +15,14 @@ class TimeStampedModel(models.Model):
 
 
 class Teacher(TimeStampedModel):
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        related_name="teacher_profile",
+        null=True,
+        blank=True,
+        help_text="Teacher login qilishi uchun bog'langan user account.",
+    )
     full_name = models.CharField(max_length=255)
     phone = models.CharField(max_length=20, blank=True)
     is_active = models.BooleanField(default=True)

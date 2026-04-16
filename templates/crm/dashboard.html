@@ -8,16 +8,28 @@
 <section class="page-header reveal">
   <div>
     <h2>{% tr "performance_dashboard" %}</h2>
-    <p>{% tr "dashboard_desc" %}</p>
+    <p>{% if teacher_mode %}{% tr "teacher_dashboard_desc" %}{% else %}{% tr "dashboard_desc" %}{% endif %}</p>
   </div>
+  {% if is_admin_user %}
   <a class="button" href="{% url 'analytics-overview' %}">{% tr "analytics_page" %}</a>
+  {% endif %}
 </section>
 
 <section class="grid stats">
   <div class="card stat-card">
-    <div class="label">{% tr "active_students" %}</div>
+    <div class="label">{% if teacher_mode %}{% tr "my_students" %}{% else %}{% tr "active_students" %}{% endif %}</div>
     <div class="value" data-count-to="{{ stats.students }}">0</div>
   </div>
+  {% if teacher_mode %}
+  <div class="card stat-card">
+    <div class="label">{% tr "my_courses" %}</div>
+    <div class="value" data-count-to="{{ stats.courses }}">0</div>
+  </div>
+  <div class="card stat-card">
+    <div class="label">{% tr "active_enrollments" %}</div>
+    <div class="value" data-count-to="{{ stats.active_enrollments }}">0</div>
+  </div>
+  {% else %}
   <div class="card stat-card">
     <div class="label">{% tr "active_teachers" %}</div>
     <div class="value" data-count-to="{{ stats.teachers }}">0</div>
@@ -26,6 +38,7 @@
     <div class="label">{% tr "active_courses" %}</div>
     <div class="value" data-count-to="{{ stats.courses }}">0</div>
   </div>
+  {% endif %}
   <div class="card stat-card">
     <div class="label">{% tr "debt_total" %}</div>
     <div class="value" data-count-to="{{ stats.outstanding_payments|floatformat:'2u' }}">{{ stats.outstanding_payments|floatformat:2 }}</div>
@@ -53,7 +66,7 @@
   </div>
 
   <div class="card reveal">
-    <h3 class="section-title">{% tr "teacher_ranking" %}</h3>
+    <h3 class="section-title">{% if teacher_mode %}{% tr "my_score" %}{% else %}{% tr "teacher_ranking" %}{% endif %}</h3>
     <ul class="list-clean">
       {% for item in teacher_ranking %}
       <li class="list-item">

@@ -8,7 +8,11 @@
     <h2>{{ teacher.full_name }}</h2>
     <p>{{ teacher.phone|default:"Telefon kiritilmagan" }}</p>
   </div>
+  {% if is_admin_user %}
   <a class="button secondary" href="{% url 'teacher-list' %}">Orqaga</a>
+  {% else %}
+  <a class="button secondary" href="{% url 'dashboard' %}">Orqaga</a>
+  {% endif %}
 </section>
 
 <section class="grid two">

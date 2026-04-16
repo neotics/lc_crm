@@ -23,6 +23,7 @@
         <a class="nav-link {% if 'student' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'student-list' %}">
           <span>{% tr "students" %}</span><span>02</span>
         </a>
+        {% if is_admin_user %}
         <a class="nav-link {% if 'teacher' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'teacher-list' %}">
           <span>{% tr "teachers" %}</span><span>03</span>
         </a>
@@ -35,11 +36,24 @@
         <a class="nav-link" href="/admin/">
           <span>{% tr "admin" %}</span><span>06</span>
         </a>
+        {% else %}
+        <a class="nav-link {% if 'course' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'course-list' %}">
+          <span>{% tr "courses" %}</span><span>03</span>
+        </a>
+        {% if current_teacher %}
+        <a class="nav-link {% if 'teacher' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'teacher-detail' current_teacher.id %}">
+          <span>{% tr "my_profile" %}</span><span>04</span>
+        </a>
+        {% endif %}
+        {% endif %}
       </nav>
       <div style="margin-top: 28px;">
         <div class="card">
           <div class="muted">{% tr "logged_in_user" %}</div>
-          <h3 style="margin-bottom: 6px;">{{ user.username }}</h3>
+          <h3 style="margin-bottom: 6px;">{{ current_teacher.full_name|default:user.username }}</h3>
+          {% if current_teacher %}
+          <div class="muted" style="margin-bottom: 10px;">{{ user.username }}</div>
+          {% endif %}
           <form method="post" action="{% url 'logout' %}">
             {% csrf_token %}
             <button type="submit" class="button secondary" style="width: 100%;">{% tr "logout" %}</button>

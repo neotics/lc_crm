@@ -17,6 +17,7 @@ from .models import (
     Teacher,
     TeacherScore,
 )
+from .services import ScoringService
 
 
 def analytics_dashboard_view(request):
@@ -51,8 +52,8 @@ class StudentAdmin(admin.ModelAdmin):
 
 @admin.register(Teacher)
 class TeacherAdmin(admin.ModelAdmin):
-    list_display = ("full_name", "phone", "is_active")
-    search_fields = ("full_name", "phone")
+    list_display = ("full_name", "phone", "user", "is_active")
+    search_fields = ("full_name", "phone", "user__username", "user__email")
 
 
 @admin.register(Course)
