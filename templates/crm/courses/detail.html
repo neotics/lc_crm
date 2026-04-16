@@ -8,7 +8,10 @@
     <h2>{{ course.name }}</h2>
     <p>{{ course.teacher.full_name }} · {{ course.start_date }} dan boshlangan</p>
   </div>
-  <a class="button secondary" href="{% url 'course-list' %}">Orqaga</a>
+  <div class="topbar-actions">
+    <a class="button" href="{% url 'lesson-record-create' course.id %}">Yangi dars kiritish</a>
+    <a class="button secondary" href="{% url 'course-list' %}">Orqaga</a>
+  </div>
 </section>
 
 <section class="grid two">
@@ -37,6 +40,7 @@
           <strong>{{ lesson.date }}</strong>
           <div class="muted">{{ lesson.topic|default:"Topic kiritilmagan" }}</div>
         </div>
+        <a class="button secondary" href="{% url 'lesson-record-edit' course.id lesson.id %}">Davomat</a>
       </li>
       {% empty %}
       <li class="empty-state">Lesson yo'q.</li>

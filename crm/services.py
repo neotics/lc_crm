@@ -110,13 +110,24 @@ class ScoringService:
     @classmethod
     def calculate_activity_score(cls, student: Student) -> float:
         window = cls.get_window()
-        attendance_points = student.attendance_records.filter(
+        attendance_records = student.attendance_records.filter(
             lesson__date__gte=window.start_date,
             status__in=[Attendance.Status.PRESENT, Attendance.Status.LATE],
-        ).count() * 10
+        )
+        attendance_points = attendance_records.count() * 10
+        participation_weights = {
+            Attendance.Participation.HIGH: 8,
+            Attendance.Participation.MEDIUM: 5,
+            Attendance.Participation.LOW: 2,
+            Attendance.Participation.NONE: 0,
+        }
+        participation_points = sum(
+            participation_weights.get(participation, 0)
+            for participation in attendance_records.values_list("participation", flat=True)
+        )
         grade_points = student.grades.filter(lesson__date__gte=window.start_date).count() * 5
         recent_payment_points = student.payments.filter(month__gte=window.start_date).count() * 15
-        raw_score = attendance_points + grade_points + recent_payment_points
+        raw_score = attendance_points + participation_points + grade_points + recent_payment_points
         return cls.clamp(raw_score)
 
     @classmethod

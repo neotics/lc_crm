@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}{% if lesson %}Darsni tahrirlash{% else %}Yangi dars{% endif %} | {{ course.name }}{% endblock %}
+
+{% block content %}
+<section class="page-header">
+  <div>
+    <h2>{% if lesson %}Darsni tahrirlash{% else %}Yangi dars kiritish{% endif %}</h2>
+    <p>{{ course.name }} · {{ course.teacher.full_name }}</p>
+  </div>
+  <a class="button secondary" href="{% url 'course-detail' course.id %}">Orqaga</a>
+</section>
+
+{% if form_errors %}
+<section class="message-list">
+  {% for error in form_errors %}
+  <div class="message error">{{ error }}</div>
+  {% endfor %}
+</section>
+{% endif %}
+
+<form method="post" class="card lesson-form">
+  {% csrf_token %}
+  <div class="form-grid">
+    <label class="field">
+      <span>Dars sanasi</span>
+      <input type="date" name="lesson_date" value="{{ lesson_date }}" required>
+    </label>
+    <label class="field">
+      <span>Mavzu</span>
+      <input type="text" name="topic" value="{{ topic }}" placeholder="Masalan: Speaking practice">
+    </label>
+  </div>
+
+  <h3 class="section-title" style="margin-top: 22px;">Attendance, aktivlik va baholar</h3>
+  <div class="table-wrap">
+    <table class="lesson-record-table">
+      <thead>
+        <tr>
+          <th>Student</th>
+          <th>Attendance</th>
+          <th>Aktivlik</th>
+          <th>Baho</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          <td>
+            <strong>{{ row.student.full_name }}</strong>
+            <div class="muted">{{ row.student.phone|default:"Telefon yo'q" }}</div>
+          </td>
+          <td>
+            <select name="status_{{ row.student.id }}">
+              {% for value, label in status_choices %}
+              <option value="{{ value }}" {% if row.status == value %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </td>
+          <td>
+            <select name="participation_{{ row.student.id }}">
+              {% for value, label in participation_choices %}
+              <option value="{{ value }}" {% if row.participation == value %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </td>
+          <td>
+            <input type="number" name="grade_{{ row.student.id }}" min="0" max="100" step="0.1" value="{{ row.grade }}" placeholder="0-100">
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4">Bu course uchun active student yo'q.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="form-actions">
+    <button type="submit">Saqlash</button>
+    <a class="button secondary" href="{% url 'course-detail' course.id %}">Bekor qilish</a>
+  </div>
+</form>
+{% endblock %}

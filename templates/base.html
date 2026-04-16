@@ -81,6 +81,13 @@
           <button type="button" class="button secondary icon-button" data-command="spotlight">{% tr "quick_focus" %}</button>
         </div>
       </div>
+      {% if messages %}
+      <section class="message-list">
+        {% for message in messages %}
+        <div class="message {{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+      </section>
+      {% endif %}
       {% block content %}{% endblock %}
     </main>
   </div>

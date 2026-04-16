@@ -384,6 +384,73 @@ th {
   margin-bottom: 18px;
 }
 
+.message-list {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.message {
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface-strong);
+  color: var(--text);
+  font-weight: 700;
+}
+
+.message.success {
+  border-color: rgba(2, 122, 72, 0.3);
+  color: var(--success);
+}
+
+.message.error {
+  border-color: rgba(180, 35, 24, 0.3);
+  color: var(--danger);
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.field {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.field input,
+.lesson-record-table input,
+.lesson-record-table select {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.88);
+  color: var(--text);
+  font: inherit;
+}
+
+.lesson-record-table th:nth-child(2),
+.lesson-record-table th:nth-child(3),
+.lesson-record-table th:nth-child(4),
+.lesson-record-table td:nth-child(2),
+.lesson-record-table td:nth-child(3),
+.lesson-record-table td:nth-child(4) {
+  min-width: 150px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
 .search-input {
   flex: 1 1 320px;
   min-width: 240px;
@@ -521,6 +588,9 @@ html[data-theme="dark"] .table-wrap table tbody tr:hover {
 html[data-theme="dark"] .search-input,
 html[data-theme="dark"] .chip,
 html[data-theme="dark"] .tab-button,
+html[data-theme="dark"] .field input,
+html[data-theme="dark"] .lesson-record-table input,
+html[data-theme="dark"] .lesson-record-table select,
 html[data-theme="dark"] .login-card input[type="text"],
 html[data-theme="dark"] .login-card input[type="password"],
 html[data-theme="dark"] .login-card input[type="email"] {
@@ -605,6 +675,7 @@ html[data-theme="dark"] .hero .muted {
 
   .page-header,
   .topbar,
+  .form-actions,
   .list-item {
     flex-direction: column;
     align-items: stretch;
@@ -617,6 +688,10 @@ html[data-theme="dark"] .hero .muted {
 
   .grid.stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
   }
 
   .card,

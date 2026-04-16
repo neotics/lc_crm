@@ -116,6 +116,12 @@ class Attendance(TimeStampedModel):
         LATE = "late", "Late"
         EXCUSED = "excused", "Excused"
 
+    class Participation(models.TextChoices):
+        HIGH = "high", "High"
+        MEDIUM = "medium", "Medium"
+        LOW = "low", "Low"
+        NONE = "none", "None"
+
     lesson = models.ForeignKey(
         Lesson,
         on_delete=models.CASCADE,
@@ -127,13 +133,18 @@ class Attendance(TimeStampedModel):
         related_name="attendance_records",
     )
     status = models.CharField(max_length=20, choices=Status.choices)
+    participation = models.CharField(
+        max_length=20,
+        choices=Participation.choices,
+        default=Participation.MEDIUM,
+    )
 
     class Meta:
         unique_together = ("lesson", "student")
         ordering = ["-lesson__date"]
 
     def __str__(self) -> str:
-        return f"{self.student} - {self.lesson} - {self.status}"
+        return f"{self.student} - {self.lesson} - {self.status} - {self.participation}"
 
 
 class Grade(TimeStampedModel):

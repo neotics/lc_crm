@@ -77,8 +77,8 @@ class LessonAdmin(admin.ModelAdmin):
 
 @admin.register(Attendance)
 class AttendanceAdmin(admin.ModelAdmin):
-    list_display = ("student", "lesson", "status")
-    list_filter = ("status", "lesson__course")
+    list_display = ("student", "lesson", "status", "participation")
+    list_filter = ("status", "participation", "lesson__course")
 
 
 @admin.register(Grade)

@@ -53,9 +53,12 @@
           <strong><a href="{% url 'course-detail' course.id %}">{{ course.name }}</a></strong>
           <div class="muted">{{ course.enrollments.count }} students · {{ course.lessons.count }} lessons</div>
         </div>
-        <span class="badge {% if course.is_active %}low{% else %}high{% endif %}">
-          {% if course.is_active %}active{% else %}inactive{% endif %}
-        </span>
+        <div class="topbar-actions">
+          <a class="button secondary" href="{% url 'lesson-record-create' course.id %}">Yangi dars</a>
+          <span class="badge {% if course.is_active %}low{% else %}high{% endif %}">
+            {% if course.is_active %}active{% else %}inactive{% endif %}
+          </span>
+        </div>
       </li>
       {% empty %}
       <li class="empty-state">Course topilmadi.</li>

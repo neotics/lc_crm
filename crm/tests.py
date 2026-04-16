@@ -215,6 +215,36 @@ class TeacherAccessTests(TestCase):
         self.assertContains(response, "My IELTS")
         self.assertNotContains(response, "Other Math")
 
+    def test_teacher_can_record_lesson_attendance_activity_and_grade(self):
+        self.client.force_login(self.teacher_user)
+        lesson_date = timezone.localdate()
+
+        response = self.client.post(
+            reverse("lesson-record-create", args=[self.course.pk]),
+            {
+                "lesson_date": lesson_date.isoformat(),
+                "topic": "Speaking practice",
+                f"status_{self.student.pk}": Attendance.Status.PRESENT,
+                f"participation_{self.student.pk}": Attendance.Participation.HIGH,
+                f"grade_{self.student.pk}": "95",
+            },
+        )
+
+        self.assertRedirects(response, reverse("course-detail", args=[self.course.pk]))
+        lesson = Lesson.objects.get(course=self.course, topic="Speaking practice")
+        attendance = Attendance.objects.get(lesson=lesson, student=self.student)
+        grade = Grade.objects.get(lesson=lesson, student=self.student)
+        self.assertEqual(attendance.status, Attendance.Status.PRESENT)
+        self.assertEqual(attendance.participation, Attendance.Participation.HIGH)
+        self.assertEqual(grade.grade, 95)
+
+    def test_teacher_cannot_record_lesson_for_another_teacher_course(self):
+        self.client.force_login(self.teacher_user)
+
+        response = self.client.get(reverse("lesson-record-create", args=[self.other_course.pk]))
+
+        self.assertEqual(response.status_code, 404)
+
     def test_teacher_cannot_open_admin_analytics(self):
         self.client.force_login(self.teacher_user)
 

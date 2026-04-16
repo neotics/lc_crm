@@ -70,6 +70,7 @@
             <th>Date</th>
             <th>Course</th>
             <th>Status</th>
+            <th>Aktivlik</th>
           </tr>
         </thead>
         <tbody>
@@ -78,9 +79,10 @@
             <td>{{ item.lesson.date }}</td>
             <td>{{ item.lesson.course.name }}</td>
             <td>{{ item.status }}</td>
+            <td>{{ item.participation }}</td>
           </tr>
           {% empty %}
-          <tr><td colspan="3">Attendance yo'q.</td></tr>
+          <tr><td colspan="4">Attendance yo'q.</td></tr>
           {% endfor %}
         </tbody>
       </table>

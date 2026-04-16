@@ -4,6 +4,7 @@ from .views import (
     AnalyticsOverviewView,
     CourseDetailView,
     CourseListView,
+    LessonRecordView,
     StudentDetailView,
     StudentListView,
     TeacherDetailView,
@@ -18,5 +19,11 @@ urlpatterns = [
     path("teachers/<int:pk>/", TeacherDetailView.as_view(), name="teacher-detail"),
     path("courses/", CourseListView.as_view(), name="course-list"),
     path("courses/<int:pk>/", CourseDetailView.as_view(), name="course-detail"),
+    path("courses/<int:course_pk>/lessons/new/", LessonRecordView.as_view(), name="lesson-record-create"),
+    path(
+        "courses/<int:course_pk>/lessons/<int:lesson_pk>/records/",
+        LessonRecordView.as_view(),
+        name="lesson-record-edit",
+    ),
     path("analytics/", AnalyticsOverviewView.as_view(), name="analytics-overview"),
 ]

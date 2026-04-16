@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import LoginView
@@ -6,14 +7,16 @@ from django.core.exceptions import PermissionDenied
 from django.db import connection
 from django.db.models import Avg, Count, DecimalField, ExpressionWrapper, F, Q, Sum, Value
 from django.db.models.functions import Coalesce
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
+from django.utils import timezone
+from django.utils.dateparse import parse_date
 from django.views.generic import DetailView, ListView, TemplateView
 from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .ml import load_model_artifact
-from .models import Course, Enrollment, Payment, Student, StudentScore, Teacher, TeacherScore
+from .models import Attendance, Course, Enrollment, Grade, Lesson, Payment, Student, StudentScore, Teacher, TeacherScore
 from .roles import (
     filter_courses_for_user,
     filter_students_for_user,
@@ -344,6 +347,174 @@ class CourseDetailView(CRMAccessMixin, DetailView):
             }
         )
         return context
+
+
+class LessonRecordView(CRMAccessMixin, TemplateView):
+    template_name = "crm/lessons/record.html"
+
+    def get_course(self):
+        queryset = filter_courses_for_user(Course.objects.select_related("teacher"), self.request.user)
+        return get_object_or_404(queryset, pk=self.kwargs["course_pk"])
+
+    def get_lesson(self, course):
+        lesson_pk = self.kwargs.get("lesson_pk")
+        if not lesson_pk:
+            return None
+        return get_object_or_404(Lesson.objects.filter(course=course), pk=lesson_pk)
+
+    def get_enrollments(self, course):
+        return course.enrollments.filter(status=Enrollment.Status.ACTIVE).select_related("student").order_by(
+            "student__full_name"
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        course = kwargs.get("course") or self.get_course()
+        lesson = kwargs.get("lesson")
+        if lesson is None and "lesson" not in kwargs:
+            lesson = self.get_lesson(course)
+        rows = kwargs.get("rows") or self.build_rows(course, lesson)
+        context.update(
+            {
+                "course": course,
+                "lesson": lesson,
+                "lesson_date": self.format_lesson_date(
+                    kwargs.get("lesson_date") or (lesson.date if lesson else timezone.localdate())
+                ),
+                "topic": kwargs.get("topic") if "topic" in kwargs else (lesson.topic if lesson else ""),
+                "rows": rows,
+                "status_choices": Attendance.Status.choices,
+                "participation_choices": Attendance.Participation.choices,
+                "form_errors": kwargs.get("form_errors", []),
+            }
+        )
+        return context
+
+    @staticmethod
+    def format_lesson_date(value):
+        return value.isoformat() if hasattr(value, "isoformat") else value
+
+    def build_rows(self, course, lesson):
+        attendance_by_student = {}
+        grade_by_student = {}
+        if lesson:
+            attendance_by_student = {
+                item.student_id: item for item in lesson.attendance_records.select_related("student")
+            }
+            grade_by_student = {item.student_id: item for item in lesson.grades.select_related("student")}
+
+        rows = []
+        for enrollment in self.get_enrollments(course):
+            student = enrollment.student
+            attendance = attendance_by_student.get(student.pk)
+            grade = grade_by_student.get(student.pk)
+            rows.append(
+                {
+                    "student": student,
+                    "status": attendance.status if attendance else Attendance.Status.PRESENT,
+                    "participation": attendance.participation if attendance else Attendance.Participation.MEDIUM,
+                    "grade": grade.grade if grade else "",
+                }
+            )
+        return rows
+
+    def post(self, request, *args, **kwargs):
+        course = self.get_course()
+        lesson = self.get_lesson(course)
+        enrollments = list(self.get_enrollments(course))
+
+        lesson_date = parse_date(request.POST.get("lesson_date", ""))
+        topic = request.POST.get("topic", "").strip()
+        form_errors = []
+        rows = []
+        valid_statuses = {value for value, _label in Attendance.Status.choices}
+        valid_participation = {value for value, _label in Attendance.Participation.choices}
+
+        if lesson_date is None:
+            form_errors.append("Dars sanasini YYYY-MM-DD formatida kiriting.")
+
+        for enrollment in enrollments:
+            student = enrollment.student
+            status = request.POST.get(f"status_{student.pk}", Attendance.Status.PRESENT)
+            participation = request.POST.get(f"participation_{student.pk}", Attendance.Participation.MEDIUM)
+            grade_value = request.POST.get(f"grade_{student.pk}", "").strip()
+
+            if status not in valid_statuses:
+                form_errors.append(f"{student.full_name}: attendance status noto'g'ri.")
+                status = Attendance.Status.PRESENT
+
+            if status == Attendance.Status.ABSENT:
+                participation = Attendance.Participation.NONE
+                grade_value = ""
+            elif participation not in valid_participation:
+                form_errors.append(f"{student.full_name}: aktivlik darajasi noto'g'ri.")
+                participation = Attendance.Participation.MEDIUM
+
+            grade = None
+            if grade_value:
+                try:
+                    grade = float(grade_value)
+                except ValueError:
+                    form_errors.append(f"{student.full_name}: baho raqam bo'lishi kerak.")
+                else:
+                    if grade < 0 or grade > 100:
+                        form_errors.append(f"{student.full_name}: baho 0 dan 100 gacha bo'lishi kerak.")
+
+            rows.append(
+                {
+                    "student": student,
+                    "status": status,
+                    "participation": participation,
+                    "grade": grade_value,
+                    "parsed_grade": grade,
+                }
+            )
+
+        if form_errors:
+            context = self.get_context_data(
+                course=course,
+                lesson=lesson,
+                lesson_date=request.POST.get("lesson_date", ""),
+                topic=topic,
+                rows=rows,
+                form_errors=form_errors,
+            )
+            return self.render_to_response(context, status=400)
+
+        if lesson is None:
+            lesson = Lesson.objects.create(course=course, date=lesson_date, topic=topic)
+        else:
+            lesson.date = lesson_date
+            lesson.topic = topic
+            lesson.save(update_fields=["date", "topic", "updated_at"])
+
+        for row in rows:
+            student = row["student"]
+            Attendance.objects.update_or_create(
+                lesson=lesson,
+                student=student,
+                defaults={
+                    "status": row["status"],
+                    "participation": row["participation"],
+                },
+            )
+
+            if row["parsed_grade"] is None:
+                Grade.objects.filter(lesson=lesson, student=student).delete()
+            else:
+                grade_queryset = Grade.objects.filter(lesson=lesson, student=student).order_by("pk")
+                grade = grade_queryset.first()
+                if grade:
+                    grade.grade = row["parsed_grade"]
+                    grade.save(update_fields=["grade", "updated_at"])
+                    grade_queryset.exclude(pk=grade.pk).delete()
+                else:
+                    Grade.objects.create(lesson=lesson, student=student, grade=row["parsed_grade"])
+
+        ScoringService.recalculate_students([row["student"] for row in rows])
+        ScoringService.recalculate_teacher_score(course.teacher)
+        messages.success(request, "Dars, attendance, aktivlik va baholar saqlandi.")
+        return redirect("course-detail", pk=course.pk)
 
 
 class AnalyticsOverviewView(AdminRequiredMixin, TemplateView):
