@@ -41,7 +41,7 @@ class Command(BaseCommand):
                     updated += 1
                 continue
 
-            username = self._unique_username(User, f"{options['prefix']}{teacher.pk}")
+            username = self._teacher_username(User, teacher, options["prefix"])
             self.stdout.write(f"Create user: {teacher.full_name} -> {username}")
             if not options["dry_run"]:
                 user = User.objects.create_user(
@@ -64,3 +64,10 @@ class Command(BaseCommand):
             username = f"{base_username}_{suffix}"
             suffix += 1
         return username
+
+    @classmethod
+    def _teacher_username(cls, User, teacher: Teacher, fallback_prefix: str) -> str:
+        first_name = teacher.full_name.split()[0].lower() if teacher.full_name.split() else fallback_prefix
+        base_username = "".join(char for char in first_name if char.isalnum()) or fallback_prefix
+        numeric_suffix = 300 + teacher.pk
+        return cls._unique_username(User, f"{base_username}{numeric_suffix:03d}"[-150:])
